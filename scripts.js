@@ -3,13 +3,14 @@ var apikey = 'dc1baa-c1b341-0b12f2-8ccf95-d69f97';
 var list = new XMLHttpRequest();
 list.onreadystatechange = function () {
   if (this.readyState == 4 && this.status == 200) {
-    var todos = JSON.parse(this.responseText);
+    var responseTexts = this.responseText;
+    var todos = JSON.parse(responseTexts);
     for (var index = 0; index < todos.length; index++) {
       console.log(todos[index]);
       render(todos[index]);
     }
   } else if (this.readyState == 4) {
-    console.log(this.responseText);
+    console.log(responseTexts);
   }
 };
 
@@ -17,28 +18,27 @@ list.open('GET', 'https://cse204.work/todos', true);
 list.setRequestHeader('x-api-key', apikey);
 list.send();
 
-document
-  .getElementById('new-todo-form')
-  .addEventListener('submit', function (event) {
-    event.preventDefault();
+document.getElementById('form').addEventListener('submit', function (event) {
+  event.preventDefault();
 
-    var data = {
-      text: newTitle.value,
-    };
-    var create = new XMLHttpRequest();
+  var data = {
+    text: latestToDo.value,
+  };
+  var create = new XMLHttpRequest();
 
-    create.onreadystatechange = function () {
-      if (this.readyState == 4 && this.status == 200) {
-        render(JSON.parse(this.responseText));
-      } else if (this.readyState == 4) {
-        console.log(this.responseText);
-      }
-    };
-    create.open('POST', 'https://cse204.work/todos', true);
-    create.setRequestHeader('Content-type', 'application/json');
-    create.setRequestHeader('x-api-key', apikey);
-    create.send(JSON.stringify(data));
-  });
+  create.onreadystatechange = function () {
+    if (this.readyState == 4 && this.status == 200) {
+      var responseTexts = this.responseText;
+      render(JSON.parse(responseTexts));
+    } else if (this.readyState == 4) {
+      console.log(responseTexts);
+    }
+  };
+  create.open('POST', 'https://cse204.work/todos', true);
+  create.setRequestHeader('Content-type', 'application/json');
+  create.setRequestHeader('x-api-key', apikey);
+  create.send(JSON.stringify(data));
+});
 
 function render(incoming) {
   var todo = document.createElement('article');
@@ -63,45 +63,79 @@ function render(incoming) {
 
   document.getElementById('todos').appendChild(todo);
 
+  var uncheckButton = document.createElement('button');
+  uncheckButton.classList.add('uncheck');
+  todo.appendChild(uncheckButton);
+
   completeButton.addEventListener('click', completeTodo);
   deleteButton.addEventListener('click', deleteTodo);
-  document.getElementById('newTitle').value = '';
+  uncheckButton.addEventListener('click', editTodo);
+
+  document.getElementById('latestToDo').value = '';
 }
 
 function completeTodo(event) {
-  var todoId = event.target.parentNode.id;
+  var todoIdentification = event.target.parentNode.id;
   var data = {
     completed: true,
   };
+
   var complete = new XMLHttpRequest();
   complete.onreadystatechange = function () {
     if (this.readyState == 4 && this.status == 200) {
       event.target.parentNode.classList.add('completed');
-
-      console.log(this.responseText);
+      var responseTexts = this.responseText;
+      console.log(responseTexts);
     } else if (this.readyState == 4) {
-      console.log(this.responseText);
+      console.log(responseTexts);
     }
   };
-  complete.open('PUT', 'https://cse204.work/todos/' + todoId, true);
+  complete.open('PUT', 'https://cse204.work/todos/' + todoIdentification, true);
   complete.setRequestHeader('Content-type', 'application/json');
   complete.setRequestHeader('x-api-key', apikey);
   complete.send(JSON.stringify(data));
 }
 
 function deleteTodo(event) {
-  var todoId = event.target.parentNode.id;
+  var todoIdentification = event.target.parentNode.id;
   var deleteRequest = new XMLHttpRequest();
   deleteRequest.onreadystatechange = function () {
     if (this.readyState == 4 && this.status == 200) {
       //event.target.parentNode.remove();
-      document.getElementById('todos').removeChild(event.target.parentNode);
+      var responseTexts = this.responseText;
+      var temp = document.getElementById('todos');
+      temp.removeChild(event.target.parentNode);
     } else if (this.readyState == 4) {
-      console.log(this.responseText);
+      console.log(responseTexts);
     }
   };
-  deleteRequest.open('DELETE', 'https://cse204.work/todos/' + todoId, true);
+  deleteRequest.open(
+    'DELETE',
+    'https://cse204.work/todos/' + todoIdentification,
+    true
+  );
   deleteRequest.setRequestHeader('Content-type', 'application/json');
   deleteRequest.setRequestHeader('x-api-key', apikey);
   deleteRequest.send();
+}
+
+function editTodo(event) {
+  var todoIdentification = event.target.parentNode.id;
+  var data = {
+    completed: false,
+  };
+  var uncheck = new XMLHttpRequest();
+  uncheck.onreadystatechange = function () {
+    if (this.readyState == 4 && this.status == 200) {
+      event.target.parentNode.classList.add('uncheck');
+      var responseTexts = this.responseText;
+      console.log(responseTexts);
+    } else if (this.readyState == 4) {
+      console.log(responseTexts);
+    }
+  };
+  uncheck.open('PUT', 'https://cse204.work/todos/' + todoIdentification, true);
+  uncheck.setRequestHeader('Content-type', 'application/json');
+  uncheck.setRequestHeader('x-api-key', apikey);
+  uncheck.send(JSON.stringify(data));
 }
